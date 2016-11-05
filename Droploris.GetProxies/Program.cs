@@ -22,7 +22,7 @@ namespace Droploris.GetProxies
 	{
 		static void Main(string[] args)
 		{
-
+			Console.WriteLine("Proxy Collector made by Droploris");
 			Console.WriteLine("How many pages to scan proxies for?");
 
 			var s = Console.ReadLine();
@@ -42,84 +42,55 @@ namespace Droploris.GetProxies
 
 			Console.WriteLine("Okay, just give me a second..");
 
-			UsingService us = UsingService.HMA;
+			Type[] serviceRotation = new Type[] //Service rotation, switch to next service whenever end of proxy list is reached.
+			{
+				typeof(HideMyAss),
+				typeof(Incloak),
+				typeof(FreeProxyList)
+
+			};
+
+			int serviceIndex = 0;
+
 
 			string file = $"{new Random().Next(0, 30000)}_proxies.txt";
 			int totalProxies = 0;
+
 			using (StreamWriter e = new StreamWriter(new FileStream(file + ".tmp", FileMode.Append)))
 			{
 				int page = 1;
 				for (int i = 1; i <= no; i++)
 				{
-					Service service;
-					switch (us)
+					Service service = null;
+
+					if (serviceRotation.Length > serviceIndex && serviceRotation[serviceIndex] != null)
 					{
-						case (UsingService.HMA):
-							{
-								service = new HideMyAss();
-								break;
-							}
+						service = (Service)Activator.CreateInstance(serviceRotation[serviceIndex]);
 
-						case (UsingService.Incloak):
-							{
-								service = new Incloak();
-								break;
-							}
-						case (UsingService.FreeProxyList):
-							{
-								service = new FreeProxyList();
-								break;
-							}
 
-						default:
-						case (UsingService.End):
-							{
-								service = null;
-								break;
-							}
-					}
+						string[] proxies = service.GetProxies(page++);
+						totalProxies += proxies.Length;
 
-					if (us != UsingService.End)
-					{
-						List<string> proxies = service.GetProxies(page++).ToList();
-						totalProxies += proxies.Count;
-						if (proxies.Count == 0)
+						if (proxies.Length == 0)
 						{
 							Console.WriteLine($"[{service.GetServiceName()}][{i}/{no}] End of Proxy list");
-							switch (us)
-							{
-								case (UsingService.HMA):
-									{
-										us = UsingService.Incloak;
-										page = 1;
-										break;
-									}
-								case (UsingService.Incloak):
-									{
-										us = UsingService.FreeProxyList;
-										page = 1;
-										break;
-									}
-
-								default:
-								case (UsingService.FreeProxyList):
-									{
-										us = UsingService.End;
-										break;
-									}
-							}
-							Console.WriteLine($"Switching to Mode {us.ToString()}");
+							serviceIndex++;
+							Console.WriteLine($"Switching to next Provider");
 						}
 						else
 						{
-
 							foreach (var p in proxies)
 							{
 								e.WriteLine(p);
 							}
 
-							Console.WriteLine($"[{service.GetServiceName()}][{i}/{no}] Caught {proxies.Count} Proxies");
+							Console.WriteLine($"[{service.GetServiceName()}][{i}/{no}] Caught {proxies.Length} Proxies");
 						}
+
+					}
+					else
+					{
+						break;
 					}
 				}
 			}
@@ -127,7 +98,7 @@ namespace Droploris.GetProxies
 			File.WriteAllLines(file, File.ReadAllLines(file + ".tmp").Distinct().ToArray());
 			File.Delete(file + ".tmp");
 			int actualCount = File.ReadLines(file).Count();
-			Console.WriteLine($"Proxies written to {file}. Total proxy count is {actualCount}\n(From {totalProxies}, {totalProxies - actualCount} ({Math.Round(((double)actualCount / totalProxies) * 100)}%) duplicates were removed)");
+			Console.WriteLine($"Proxies written to {file}. Total proxy count is {actualCount}\n(From {totalProxies}, {totalProxies - actualCount} ({Math.Round(100 - ((double)actualCount / totalProxies) * 100)}%) duplicates were removed)");
 			Console.ReadLine();
 
 
