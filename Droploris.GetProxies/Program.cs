@@ -23,9 +23,13 @@ namespace Droploris.GetProxies
 		static void Main(string[] args)
 		{
 			Console.WriteLine("Proxy Collector made by Droploris");
-			Console.WriteLine("How many pages to scan proxies for?");
+
+			CUI.ReplaceLine(1, "How many pages to scan proxies for?");
+
 
 			var s = Console.ReadLine();
+			CUI.ClearLine(2);
+
 			int no = 0;
 			try
 			{
@@ -35,12 +39,13 @@ namespace Droploris.GetProxies
 			}
 			catch (Exception e)
 			{
-				Console.WriteLine("Error: " + e.Message);
+				CUI.ReplaceLine(1, $"Error {e.Message}");
+
 				Console.ReadKey();
 				Environment.Exit(0);
 			}
 
-			Console.WriteLine("Okay, just give me a second..");
+			CUI.ReplaceLine(1, "Okay, just give me a second..");
 
 			Type[] serviceRotation = new Type[] //Service rotation, switch to next service whenever end of proxy list is reached.
 			{
@@ -51,7 +56,6 @@ namespace Droploris.GetProxies
 			};
 
 			int serviceIndex = 0;
-
 
 			string file = $"{new Random().Next(0, 30000)}_proxies.txt";
 			int totalProxies = 0;
@@ -71,9 +75,25 @@ namespace Droploris.GetProxies
 						string[] proxies = service.GetProxies(page++);
 						totalProxies += proxies.Length;
 
+						string processBar = "[";
+						float done = ((float)i / (float)no);
+						int bars = (int)(done * (Console.WindowWidth - 2 - 4));
+
+						for (int o = 0; o < bars; o++)
+							processBar += ".";
+
+						for (int o = 0; o < Console.WindowWidth - 2 - 4 - bars; o++)
+							processBar += " ";
+
+						processBar += "]";
+						processBar += (int)(done * 100) + "%";
+
+						CUI.ReplaceLine(Console.WindowHeight - 1, processBar);
+
+
 						if (proxies.Length == 0)
 						{
-							Console.WriteLine($"[{service.GetServiceName()}][{i}/{no}] End of Proxy list");
+							CUI.ReplaceLine(serviceIndex + 1, $"[{service.GetServiceName()}][{i}/{no}] End of Proxy list");
 							serviceIndex++;
 							Console.WriteLine($"Switching to next Provider");
 						}
@@ -84,7 +104,7 @@ namespace Droploris.GetProxies
 								e.WriteLine(p);
 							}
 
-							Console.WriteLine($"[{service.GetServiceName()}][{i}/{no}] Caught {proxies.Length} Proxies");
+							CUI.ReplaceLine(serviceIndex + 1, $"[{service.GetServiceName()}][{i}/{no}] Caught {proxies.Length} Proxies");
 						}
 
 					}
