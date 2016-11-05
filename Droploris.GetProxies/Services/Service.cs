@@ -15,14 +15,6 @@ using System.Threading.Tasks;
 
 namespace Droploris.GetProxies.Services
 {
-	public enum UsingService //TODO: Remove this piece of shit and code something decent for fucking once
-	{
-		HMA,
-		Incloak,
-		FreeProxyList,
-		End
-	}
-
 	public abstract class Service
 	{
 
